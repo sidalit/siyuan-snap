@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=SiYuan
+GenericName=Knowledge Base
+Comment=Take notes and organize knowledge with block references and Markdown
+Exec=siyuan %U
+Icon=${SNAP}/meta/gui/siyuan.png
+Terminal=false
+Categories=Office;Utility;
+Keywords=notes;markdown;knowledge;wiki;outliner;flashcards;
+MimeType=x-scheme-handler/siyuan;text/markdown;
+StartupNotify=true
+StartupWMClass=org.b3log.siyuan

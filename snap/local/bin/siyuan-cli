@@ -1,0 +1,5 @@
+#!/bin/bash
+set -euo pipefail
+
+# The kernel reads the real home from the user database; share the desktop's.
+exec "$SNAP/opt/siyuan/resources/kernel/SiYuan-Kernel" --home-dir "$SNAP_USER_COMMON" "$@"

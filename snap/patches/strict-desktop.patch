@@ -1,0 +1,56 @@
+--- a/app/electron/kernel/kernelBoot.ts
++++ b/app/electron/kernel/kernelBoot.ts
+@@ -491,6 +491,11 @@
+             run: {exited: false, started: false},
+         };
+         const cmds: string[] = ["serve", "--port", kernelPort.toString(), "--wd", paths.appDir, "--attach-ui"];
++        if (process.env.SNAP) {
++            // The kernel reads the home directory from the user database, which names the real
++            // home; its hidden folders are out of reach, so pass the one the desktop uses
++            cmds.push("--home-dir", app.getPath("home"));
++        }
+         if (!startup.ownsKernel) {
+             cmds.push("--mode", "dev");
+         }
+--- a/app/src/config/tabs/aboutTab.ts
++++ b/app/src/config/tabs/aboutTab.ts
+@@ -13,6 +13,9 @@
+ import {ipcRenderer} from "electron";
+ /// #endif
+ 
++// snapd updates the snap, so the update check and the update channel are not offered
++const isSnap = () => !!window.siyuan.config.system.appDir?.startsWith("/snap/");
++
+ const registerAboutVersionGroup = (tab: SettingTabBuilder) => {
+     const group = tab.group("version", "");
+ 
+@@ -32,7 +35,7 @@
+         html: genAboutVersionHtml,
+         afterMount: mountAboutVersionSlot,
+     });
+-    if (!window.siyuan.config.system.isMicrosoftStore && getHostCapabilities().ownsKernel) {
++    if (!window.siyuan.config.system.isMicrosoftStore && getHostCapabilities().ownsKernel && !isSnap()) {
+         group.select("system.updateChannel", {
+             title: window.siyuan.languages.updateChannel,
+             desc: window.siyuan.languages.updateChannelTip,
+@@ -57,7 +60,7 @@
+ };
+ 
+ const genAboutVersionHtml = (): string => {
+-    if (!getHostCapabilities().ownsKernel) {
++    if (!getHostCapabilities().ownsKernel || isSnap()) {
+         return `<div class="fn__flex b3-label config-item">
+     <div class="fn__flex-1">
+         ${genAboutVersionName()}
+--- a/kernel/model/updater.go
++++ b/kernel/model/updater.go
+@@ -326,7 +326,8 @@
+ 		return
+ 	}
+ 
+-	if Conf.System.Load().IsMicrosoftStore {
++	// snapd updates the snap
++	if Conf.System.Load().IsMicrosoftStore || "" != os.Getenv("SNAP") {
+ 		return
+ 	}
+ 

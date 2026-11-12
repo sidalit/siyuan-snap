@@ -1,0 +1,14 @@
+#!/bin/bash
+set -euo pipefail
+
+# Keep settings and the default workspace across revisions.
+export HOME="$SNAP_USER_COMMON"
+
+# The GNOME extension keeps its files in XDG_CONFIG_HOME; only the profile moves.
+profile="$SNAP_USER_COMMON/.config/SiYuan-Electron"
+link="${XDG_CONFIG_HOME:-$SNAP_USER_DATA/.config}/SiYuan-Electron"
+mkdir -p "$profile" "${link%/*}"
+[[ -e $link || -L $link ]] || ln -s "$profile" "$link"
+
+# browser-support does not allow Chromium's sandbox; AppArmor confines the snap.
+exec "$SNAP/opt/siyuan/siyuan" --no-sandbox "$@"

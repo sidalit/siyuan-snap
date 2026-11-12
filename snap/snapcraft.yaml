@@ -1,0 +1,273 @@
+name: siyuan
+base: core26
+version: '3.8.10'
+title: SiYuan
+icon: snap/gui/siyuan.png
+summary: Privacy-first personal knowledge base with block references and Markdown
+description: |
+  SiYuan is a personal knowledge management system that keeps its data on
+  your computer. Notes are made of blocks that can be referenced, embedded
+  and linked in both directions, and are edited as WYSIWYG Markdown. It
+  includes list outlines, database table views, flashcards with spaced
+  repetition, PDF annotation, templates, text recognition in images, AI
+  assistance through the model service you configure, a community
+  marketplace of themes and plugins, and export to Markdown, PDF, Word and
+  HTML.
+
+  Open SiYuan from the application menu or run siyuan. The first start asks
+  for a workspace, the folder that holds your notes: keep the proposed
+  ~/snap/siyuan/common/SiYuan, or choose an empty folder in your home
+  directory such as ~/SiYuan.
+
+  siyuan.cli is the command-line interface to the same workspaces:
+
+     siyuan.cli notebook list -w ~/SiYuan
+     siyuan.cli search "keyword" -w ~/SiYuan
+
+  **Optional connections**
+
+  To record audio into a note, run:
+
+     sudo snap connect siyuan:audio-record
+
+  To keep a workspace on a USB drive or another disk under /media or /mnt,
+  run:
+
+     sudo snap connect siyuan:removable-media
+
+  Updates are managed by snapd.
+license: AGPL-3.0-or-later
+grade: stable
+confinement: strict
+website: https://b3log.org/siyuan
+source-code:
+  - https://github.com/siyuan-note/siyuan
+  - https://github.com/sidalit/siyuan-snap
+issues:
+  - https://github.com/siyuan-note/siyuan/issues
+  - https://github.com/sidalit/siyuan-snap/issues
+contact: https://github.com/sidalit/siyuan-snap/issues
+
+platforms:
+  amd64:
+  arm64:
+
+apps:
+  cli:
+    command: bin/siyuan-cli
+    environment:
+      XDG_CONFIG_HOME: $SNAP_USER_DATA/.config
+      XDG_DATA_HOME: $SNAP_USER_DATA/.local/share
+    plugs:
+      - home
+      - network
+      - network-bind
+      - removable-media
+
+  siyuan:
+    command: bin/siyuan
+    extensions: [gnome]
+    plugs:
+      - audio-playback
+      - audio-record
+      - browser-support
+      - home
+      - network
+      - network-bind
+      - removable-media
+
+parts:
+  pnpm:
+    plugin: nil
+    build-snaps:
+      - node/24/stable
+    override-build: |
+      npm install --global --prefix "$CRAFT_PART_INSTALL" --allow-scripts=pnpm pnpm@12.6.0
+    prime:
+      - -*
+
+  onnxruntime:
+    plugin: dump
+    source:
+      - to amd64: https://github.com/microsoft/onnxruntime/releases/download/v1.24.3/onnxruntime-linux-x64-1.24.3.tgz
+      - to arm64: https://github.com/microsoft/onnxruntime/releases/download/v1.24.3/onnxruntime-linux-aarch64-1.24.3.tgz
+    source-type: file
+    source-checksum:
+      - to amd64: sha256/4c436a280d650f8bf32c921a2bf4de7c42cc32884c51c90e47de991708bbb5a4
+      - to arm64: sha256/15100fb88b4c692cdd6bf2cca5f4a26a3806cebca8136de6681e2aba4b2ea033
+    organize:
+      onnxruntime-*.tgz: build-deps/ocr/cache/
+    prime:
+      - -*
+
+  zig:
+    plugin: dump
+    source:
+      - to amd64: https://ziglang.org/download/0.15.2/zig-x86_64-linux-0.15.2.tar.xz
+      - to arm64: https://ziglang.org/download/0.15.2/zig-aarch64-linux-0.15.2.tar.xz
+    source-type: file
+    source-checksum:
+      - to amd64: sha256/02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239
+      - to arm64: sha256/958ed7d1e00d0ea76590d27666efbf7a932281b3d7ba0c6b01b0ff26498f667f
+    organize:
+      zig-*.tar.xz: build-deps/ocr/cache/
+    prime:
+      - -*
+
+  ocr-det-model:
+    plugin: dump
+    source: https://huggingface.co/PaddlePaddle/PP-OCRv6_tiny_det_onnx/resolve/2ba1506c0380b8f0b03dd142459aac66d4421f6c/inference.onnx
+    source-type: file
+    source-checksum: sha256/193bab7a04fca699a6c82e6abb5b81bdb28177f0abd4062552b04908dafb19f8
+    organize:
+      inference.onnx: build-deps/ocr/models/tiny/det/inference.onnx
+    prime:
+      - -*
+
+  ocr-det-config:
+    plugin: dump
+    source: https://huggingface.co/PaddlePaddle/PP-OCRv6_tiny_det_onnx/resolve/2ba1506c0380b8f0b03dd142459aac66d4421f6c/inference.yml
+    source-type: file
+    source-checksum: sha256/3ac018be6f97499a08faa3bbdeb33640968d9307f6736d152902747a9f259593
+    organize:
+      inference.yml: build-deps/ocr/models/tiny/det/inference.yml
+    prime:
+      - -*
+
+  ocr-rec-model:
+    plugin: dump
+    source: https://huggingface.co/PaddlePaddle/PP-OCRv6_tiny_rec_onnx/resolve/2612ab37152ae0a677521bae4e1e3d4fb4cf7c30/inference.onnx
+    source-type: file
+    source-checksum: sha256/9ef676d6ed3c88256a2d92c640c44f25b0c40947e111b14b8be8f594091563e6
+    organize:
+      inference.onnx: build-deps/ocr/models/tiny/rec/inference.onnx
+    prime:
+      - -*
+
+  ocr-rec-config:
+    plugin: dump
+    source: https://huggingface.co/PaddlePaddle/PP-OCRv6_tiny_rec_onnx/resolve/2612ab37152ae0a677521bae4e1e3d4fb4cf7c30/inference.yml
+    source-type: file
+    source-checksum: sha256/66170210bad538e83fff3c4a3867e547d6bf20b50d64b20347c4b913f3034ea1
+    organize:
+      inference.yml: build-deps/ocr/models/tiny/rec/inference.yml
+    prime:
+      - -*
+
+  # The release upstream commits as app/pandoc/pandoc-linux-*.zip.
+  pandoc:
+    plugin: dump
+    source:
+      - to amd64: https://github.com/jgm/pandoc/releases/download/3.10.1/pandoc-3.10.1-linux-amd64.tar.gz
+      - to arm64: https://github.com/jgm/pandoc/releases/download/3.10.1/pandoc-3.10.1-linux-arm64.tar.gz
+    source-checksum:
+      - to amd64: sha256/72948bf5784f560d5ad1876709daca27e0667f262da727bb33f77b58e52df2f5
+      - to arm64: sha256/cd3963da375793a4804c65ae538b4f7b9c23f87cac7f6c74a1cf5e2fff7e8d59
+    organize:
+      bin/pandoc: opt/siyuan/resources/pandoc/bin/pandoc
+      share/man: opt/siyuan/resources/pandoc/share/man
+    stage:
+      - opt/siyuan/resources/pandoc
+
+  # The release archive has no license file.
+  pandoc-copyright:
+    plugin: dump
+    source: https://raw.githubusercontent.com/jgm/pandoc/3.10.1/COPYRIGHT
+    source-type: file
+    source-checksum: sha256/842e33ef01625e93f85bebb8bac83aa570186b7aa77a09971257cc29f8f60740
+    organize:
+      COPYRIGHT: share/doc/pandoc/COPYRIGHT
+
+  pandoc-copying:
+    plugin: dump
+    source: https://raw.githubusercontent.com/jgm/pandoc/3.10.1/COPYING.md
+    source-type: file
+    source-checksum: sha256/3ebfbf9235b049d384cdba5a66a1a3434bb544391e720b76faa8e1b3ee61a4e5
+    organize:
+      COPYING.md: share/doc/pandoc/COPYING.md
+
+  siyuan:
+    after:
+      - pnpm
+      - pandoc
+      - onnxruntime
+      - zig
+      - ocr-det-model
+      - ocr-det-config
+      - ocr-rec-model
+      - ocr-rec-config
+    plugin: nil
+    source: https://github.com/siyuan-note/siyuan.git
+    source-tag: v$SNAPCRAFT_PROJECT_VERSION
+    source-depth: 1
+    build-snaps:
+      - go/1.26/stable
+      - node/24/stable
+    build-packages:
+      - binutils
+      - build-essential
+      - ca-certificates
+      - git
+      - patch
+      - python3
+    build-environment:
+      - CGO_ENABLED: '1'
+      - GOTOOLCHAIN: local
+      - NODE_OPTIONS: --max-old-space-size=4096
+    override-pull: |
+      craftctl default
+      patch -p1 < "$CRAFT_PROJECT_DIR/snap/patches/strict-desktop.patch"
+    override-build: |
+      export PATH="$CRAFT_STAGE/bin:$PATH"
+      case "$CRAFT_ARCH_BUILD_FOR" in
+        amd64) arch=x64; suffix= ;;
+        arm64) arch=arm64; suffix=-arm64 ;;
+      esac
+
+      mkdir -p .cache/ocr app/stage/ocr/models
+      cp -a "$CRAFT_STAGE/build-deps/ocr/cache/." .cache/ocr/
+      cp -a "$CRAFT_STAGE/build-deps/ocr/models/." app/stage/ocr/models/
+      # prepare-ocr.py would download any input not pinned in scripts/ocr-assets.json.
+      for file in .cache/ocr/* app/stage/ocr/models/tiny/*/*; do
+        if ! grep -q "$(sha256sum "$file" | cut -d' ' -f1)" scripts/ocr-assets.json; then
+          echo "$file is not pinned in scripts/ocr-assets.json." >&2
+          case "$SNAPCRAFT_PROJECT_VERSION" in
+            git-*) ;;
+            *) exit 1 ;;
+          esac
+        fi
+      done
+
+      cd app
+      pnpm install --frozen-lockfile
+      # One bundle at a time to bound memory use.
+      node scripts/clean-stage.mjs
+      pnpm run --sequential '/build:.*/'
+
+      # Upstream links the kernel statically against musl; the base provides glibc.
+      (cd ../kernel && go build -buildmode=pie -tags 'fts5 sqlcipher' -ldflags '-s -w' \
+        -o "../app/kernel-linux$suffix/SiYuan-Kernel" .)
+
+      pnpm exec electron-builder --linux dir --"$arch" --publish never \
+        --config "electron-builder-linux$suffix.yml"
+
+      unpacked="build/linux$suffix-unpacked"
+      if ! cmp -s "$unpacked/resources/pandoc/bin/pandoc" \
+          "$CRAFT_STAGE/opt/siyuan/resources/pandoc/bin/pandoc"; then
+        echo "Upstream bundles a different Pandoc than the pandoc part." >&2
+        # Upstream HEAD may be ahead of the release that the pandoc part follows.
+        case "$SNAPCRAFT_PROJECT_VERSION" in
+          git-*) ;;
+          *) exit 1 ;;
+        esac
+      fi
+      rm -r "$unpacked/resources/pandoc"
+
+      mkdir -p "$CRAFT_PART_INSTALL/opt/siyuan"
+      cp -a "$unpacked/." "$CRAFT_PART_INSTALL/opt/siyuan/"
+      rm "$CRAFT_PART_INSTALL/opt/siyuan/chrome-sandbox"
+      install -Dm644 -t "$CRAFT_PART_INSTALL/share/doc/siyuan" ../LICENSE ../THIRD_PARTY_NOTICES.md
+
+  launcher:
+    plugin: dump
+    source: snap/local
