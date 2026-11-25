@@ -86,17 +86,15 @@ parts:
     prime:
       - -*
 
+  # microsoft/onnxruntime's GitHub releases are gone; its NuGet package
+  # holds the same libraries (snap/patches/onnxruntime-nuget.patch).
   onnxruntime:
     plugin: dump
-    source:
-      - to amd64: https://github.com/microsoft/onnxruntime/releases/download/v1.24.3/onnxruntime-linux-x64-1.24.3.tgz
-      - to arm64: https://github.com/microsoft/onnxruntime/releases/download/v1.24.3/onnxruntime-linux-aarch64-1.24.3.tgz
+    source: https://api.nuget.org/v3-flatcontainer/microsoft.ml.onnxruntime/1.24.3/microsoft.ml.onnxruntime.1.24.3.nupkg
     source-type: file
-    source-checksum:
-      - to amd64: sha256/4c436a280d650f8bf32c921a2bf4de7c42cc32884c51c90e47de991708bbb5a4
-      - to arm64: sha256/15100fb88b4c692cdd6bf2cca5f4a26a3806cebca8136de6681e2aba4b2ea033
+    source-checksum: sha256/e4ab3b236c1b803e1e7167fe9a75caa1b82a2fd4ae82abbd130937c07517bcdb
     organize:
-      onnxruntime-*.tgz: build-deps/ocr/cache/
+      microsoft.ml.onnxruntime.*.nupkg: build-deps/ocr/cache/
     prime:
       - -*
 
@@ -217,6 +215,7 @@ parts:
     override-pull: |
       craftctl default
       patch -p1 < "$CRAFT_PROJECT_DIR/snap/patches/strict-desktop.patch"
+      patch -p1 < "$CRAFT_PROJECT_DIR/snap/patches/onnxruntime-nuget.patch"
     override-build: |
       export PATH="$CRAFT_STAGE/bin:$PATH"
       case "$CRAFT_ARCH_BUILD_FOR" in
