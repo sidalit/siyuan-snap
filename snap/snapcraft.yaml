@@ -1,6 +1,6 @@
 name: siyuan
 base: core26
-version: '3.8.10'
+version: '3.8.12'
 title: SiYuan
 icon: snap/gui/siyuan.png
 summary: Privacy-first personal knowledge base with block references and Markdown
